@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HKDSE Variations 變分 Revision Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .heart-bounce { animation: bounce 1s infinite; }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20%) scale(1.1); }
+        }
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+        .toast {
+            min-width: 250px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.3s ease-out forwards;
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        .toast.success { background-color: #10b981; }
+        .toast.error { background-color: #ef4444; }
+        .toast.info { background-color: #3b82f6; }
+        .toast.fade-out { animation: fadeOut 0.5s ease-in forwards; }
+
+        @keyframes slideIn {
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateX(100%); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px;}
+        ::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4 selection:bg-amber-500 selection:text-white">
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <div id="login-screen" class="w-full max-w-md glass-panel rounded-3xl p-8 shadow-2xl transition-all duration-500">
+        <div class="text-center mb-8">
+            <div class="text-5xl mb-4">🧮</div>
+            <h1 class="text-2xl font-bold text-white mb-2">HKDSE Mathematics</h1>
+            <h2 class="text-amber-400 font-semibold tracking-wide uppercase text-sm">Variations 變分 Revision</h2>
+        </div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-400 mb-1">Class (e.g., 4A)</label>
+                <input type="text" id="student-class" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 uppercase" placeholder="4A">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-400 mb-1">Class Number</label>
+                <input type="number" id="student-no" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500" placeholder="12">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-400 mb-1">Name</label>
+                <input type="text" id="student-name" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500" placeholder="Chan Tai Man">
+            </div>
+            <button onclick="login()" class="w-full mt-6 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 px-4 rounded-lg transition shadow-lg shadow-amber-500/20 active:scale-95">
+                Start Mission
+            </button>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="hidden w-full max-w-3xl flex flex-col gap-6 transition-all duration-500">
+
+        <!-- Header -->
+        <div class="glass-panel rounded-2xl p-6 flex justify-between items-center shadow-xl">
+            <div>
+                <h2 class="text-2xl font-bold text-white" id="display-name">Welcome, Student</h2>
+                <p class="text-slate-400 text-sm">Class: <span id="display-class" class="text-amber-400 font-semibold"></span> | No: <span id="display-no" class="text-amber-400 font-semibold"></span></p>
+            </div>
+            <button onclick="logout()" class="text-slate-400 hover:text-white transition text-sm">
+                Switch User 🚪
+            </button>
+        </div>
+
+        <!-- Completion Passport -->
+        <div class="glass-panel rounded-2xl p-6 shadow-xl border border-amber-500/30 relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none text-8xl">🎓</div>
+
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b border-slate-700/60 pb-4">
+                <h3 class="text-lg font-bold text-amber-400 flex items-center gap-2">
+                    🎓 Completion Passport (學習記錄卡)
+                </h3>
+                <div class="flex flex-wrap gap-2 z-10 justify-end">
+                    <button id="btn-submit-teacher" onclick="submitToTeacher()" class="bg-blue-600 hover:bg-blue-500 border border-blue-400 text-white px-3 py-2 rounded-lg font-semibold transition shadow-lg shadow-blue-500/20 text-sm flex items-center gap-2 active:scale-95">
+                        <span>Submit to Teacher</span> 📧
+                    </button>
+                    <button onclick="resetBadges()" class="bg-slate-700 hover:bg-slate-600 border border-slate-500 text-slate-200 px-3 py-2 rounded-lg transition text-sm active:scale-95">
+                        Reset 🔄
+                    </button>
+                </div>
+            </div>
+
+            <!-- Score Board -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+                <div class="bg-slate-800/80 rounded-xl p-4 text-center border border-slate-700 transition duration-300" id="badge-card-1">
+                    <div class="text-3xl mb-2" id="badge-icon-1">🔒</div>
+                    <div class="font-bold text-slate-200">Level 1</div>
+                    <div class="text-xs text-slate-400 mb-2">Paper 2 MC (short)</div>
+                    <div id="badge-status-1" class="text-sm font-semibold text-slate-500">Not Attempted</div>
+                    <div class="mt-2 inline-flex items-center gap-1 bg-slate-900/80 border border-amber-500/30 rounded-full px-3 py-1">
+                        <span class="text-xs text-amber-300 font-bold">⭐ <span id="score-1">0</span> marks</span>
+                    </div>
+                </div>
+                <div class="bg-slate-800/80 rounded-xl p-4 text-center border border-slate-700 transition duration-300" id="badge-card-2">
+                    <div class="text-3xl mb-2" id="badge-icon-2">🔒</div>
+                    <div class="font-bold text-slate-200">Level 2</div>
+                    <div class="text-xs text-slate-400 mb-2">Paper 1 Part (a) only</div>
+                    <div id="badge-status-2" class="text-sm font-semibold text-slate-500">Not Attempted</div>
+                    <div class="mt-2 inline-flex items-center gap-1 bg-slate-900/80 border border-amber-500/30 rounded-full px-3 py-1">
+                        <span class="text-xs text-amber-300 font-bold">⭐ <span id="score-2">0</span> marks</span>
+                    </div>
+                </div>
+                <div class="bg-slate-800/80 rounded-xl p-4 text-center border border-slate-700 transition duration-300" id="badge-card-3">
+                    <div class="text-3xl mb-2" id="badge-icon-3">🔒</div>
+                    <div class="font-bold text-slate-200">Level 3</div>
+                    <div class="text-xs text-slate-400 mb-2">Paper 1 Full questions</div>
+                    <div id="badge-status-3" class="text-sm font-semibold text-slate-500">Not Attempted</div>
+                    <div class="mt-2 inline-flex items-center gap-1 bg-slate-900/80 border border-amber-500/30 rounded-full px-3 py-1">
+                        <span class="text-xs text-amber-300 font-bold">⭐ <span id="score-3">0</span> marks</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 relative z-10 flex justify-center">
+                <div class="bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 border border-amber-500/40 rounded-full px-6 py-2 flex items-center gap-3">
+                    <span class="text-lg">🏆</span>
+                    <span class="text-sm font-bold text-amber-300">Total Marks: <span id="total-marks" class="text-xl font-extrabold text-yellow-300">0</span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button onclick="startGame(1)" class="glass-panel rounded-2xl p-6 text-left hover:-translate-y-1 transition duration-300 border-t-4 border-green-500 group relative overflow-hidden">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-xl text-white group-hover:text-green-400 transition">Level 1</h3>
+                    <span class="text-2xl group-hover:scale-110 transition">🟢</span>
+                </div>
+                <p class="text-slate-400 text-sm relative z-10">Ch. 11 Variations: DSE Paper 2 MC — direct, inverse & joint variation (Q157–172), 2 marks each.</p>
+            </button>
+
+            <button onclick="startGame(2)" class="glass-panel rounded-2xl p-6 text-left hover:-translate-y-1 transition duration-300 border-t-4 border-amber-500 group relative overflow-hidden">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-xl text-white group-hover:text-amber-400 transition">Level 2</h3>
+                    <span class="text-2xl group-hover:scale-110 transition">🟡</span>
+                </div>
+                <p class="text-slate-400 text-sm relative z-10">DSE Paper 1 variations questions from 2014 onwards — Part (a) only, 3 marks each.</p>
+            </button>
+
+            <button onclick="startGame(3)" class="glass-panel rounded-2xl p-6 text-left hover:-translate-y-1 transition duration-300 border-t-4 border-red-500 group relative overflow-hidden">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-xl text-white group-hover:text-red-400 transition">Level 3</h3>
+                    <span class="text-2xl group-hover:scale-110 transition">🔴</span>
+                </div>
+                <p class="text-slate-400 text-sm relative z-10">Full multi-part DSE Paper 1 variations questions from 2014 onwards, 6 marks each.</p>
+            </button>
+        </div>
+    </div>
+
+    <div id="game-screen" class="hidden w-full max-w-2xl flex flex-col gap-4">
+
+        <div class="flex justify-between items-center bg-slate-800 rounded-full px-6 py-3 shadow-lg border border-slate-700">
+            <div class="font-bold text-amber-400" id="level-indicator">Level 1</div>
+            <div class="flex gap-1 text-xl" id="lives-container">
+                <!-- Hearts injected here -->
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="text-slate-300 font-mono bg-slate-900 px-3 py-1 rounded-full text-sm font-semibold">
+                    Q: <span id="q-counter">1/5</span>
+                </div>
+                <div class="text-amber-300 font-mono bg-slate-900 border border-amber-500/30 px-3 py-1 rounded-full text-sm font-semibold">
+                    ⭐ <span id="live-score">0</span>
+                </div>
+            </div>
+            <button onclick="quitGame()" class="text-slate-500 hover:text-red-400 transition text-xs font-bold uppercase tracking-wider">
+                Abort
+            </button>
+        </div>
+
+        <div class="glass-panel rounded-3xl p-6 sm:p-8 shadow-2xl text-center min-h-[350px] flex flex-col relative w-full overflow-hidden" id="main-game-area">
+
+            <div class="w-full flex justify-between items-center mb-2 border-b border-slate-700/50 pb-3">
+                <div class="flex flex-col text-left">
+                    <h3 class="text-slate-300 text-sm font-semibold" id="question-instruction">Solve the variation problem:</h3>
+                    <div class="flex gap-3 flex-wrap">
+                        <span class="text-xs text-amber-400 font-semibold" id="format-hint"></span>
+                        <span class="text-xs text-sky-400 font-semibold" id="paper-hint"></span>
+                        <span class="text-xs text-emerald-400 font-semibold" id="part-label"></span>
+                    </div>
+                </div>
+                <div class="flex gap-2 shrink-0">
+                    <button onclick="askAITutor()" class="text-[10px] sm:text-xs bg-purple-600/20 text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-full hover:bg-purple-600/40 transition font-bold active:scale-95 flex items-center gap-1">
+                        Ask AI ✨
+                    </button>
+                    <button onclick="toggleCheatSheet()" class="text-[10px] sm:text-xs bg-blue-600/20 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-full hover:bg-blue-600/40 transition active:scale-95 flex items-center gap-1">
+                        Formulas 💡
+                    </button>
+                </div>
+            </div>
+
+            <div id="question-display" class="text-lg sm:text-xl text-white mb-6 overflow-x-auto py-6 min-h-[100px] text-left leading-relaxed max-w-xl mx-auto">
+                <!-- MathJax renders here -->
+            </div>
+
+            <div id="mc-options" class="grid grid-cols-1 sm:grid-cols-2 gap-4 hidden w-full mt-auto">
+                <button onclick="submitMCAnswer(0)" class="option-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl p-4 text-xl transition-all shadow-md active:scale-95 min-h-[64px] flex items-center justify-center"></button>
+                <button onclick="submitMCAnswer(1)" class="option-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl p-4 text-xl transition-all shadow-md active:scale-95 min-h-[64px] flex items-center justify-center"></button>
+                <button onclick="submitMCAnswer(2)" class="option-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl p-4 text-xl transition-all shadow-md active:scale-95 min-h-[64px] flex items-center justify-center"></button>
+                <button onclick="submitMCAnswer(3)" class="option-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl p-4 text-xl transition-all shadow-md active:scale-95 min-h-[64px] flex items-center justify-center"></button>
+            </div>
+
+            <div id="conventional-area" class="hidden flex flex-col items-center gap-4 w-full max-w-md mx-auto mt-auto">
+                <p class="text-[11px] text-slate-400 text-center leading-tight">
+                    Type your answer, e.g. <span class='font-mono text-emerald-400'>23</span>, <span class='font-mono text-emerald-400'>-4</span>, <span class='font-mono text-emerald-400'>2.5</span>, <span class='font-mono text-emerald-400'>13π</span>, <span class='font-mono text-emerald-400'>x^2 + 13x</span> (or use the <span class='font-mono text-emerald-400'>²</span> button) or <span class='font-mono text-emerald-400'>No</span>
+                </p>
+
+                <div class="flex gap-2 w-full">
+                    <input type="text" id="conventional-input" placeholder="e.g. 23 or 13π" class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-lg font-mono text-white outline-none focus:border-amber-500 transition shadow-inner" oninput="updateLivePreview()" onkeypress="handleEnter(event)">
+                    <button onclick="submitFillAnswer()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-6 rounded-lg text-base transition shadow-md active:scale-95">
+                        Submit
+                    </button>
+                </div>
+
+                <div id="helper-buttons" class="flex flex-wrap gap-2 justify-center w-full mt-1">
+                    <!-- dynamically injected helper buttons -->
+                </div>
+
+                <div class="w-full p-4 bg-slate-900/60 border border-slate-700 rounded-lg text-center min-h-[80px] flex flex-col justify-center items-center mt-2">
+                    <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Live Answer Preview</span>
+                    <div id="math-preview" class="text-xl text-slate-300 min-h-[30px] flex items-center justify-center">Empty</div>
+                </div>
+            </div>
+
+            <!-- Level 3: multi-part (a)(b) blocks, each with its own question + answer area -->
+            <div id="l3-area" class="hidden w-full mt-auto">
+                <div id="l3-blocks" class="flex flex-col gap-4"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CHEAT SHEET MODAL -->
+    <div id="cheat-modal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm transition-opacity" onclick="if(event.target===this) toggleCheatSheet()">
+        <div class="glass-panel p-6 rounded-2xl border border-slate-600 max-w-sm w-full shadow-2xl">
+            <h3 class="text-2xl font-bold text-amber-400 mb-4 border-b border-slate-700 pb-2">Variation Formulas 變分公式</h3>
+            <ul class="space-y-4 text-lg font-serif">
+                <li class="flex justify-between items-center"><span class="text-slate-300 text-sm font-sans">Direct variation:</span> <span class="bg-slate-900/80 px-2 py-1 rounded text-white border border-slate-700">\(y = kx\)</span></li>
+                <li class="flex justify-between items-center"><span class="text-slate-300 text-sm font-sans">Inverse variation:</span> <span class="bg-slate-900/80 px-2 py-1 rounded text-white border border-slate-700">\(y = \dfrac{k}{x}\)</span></li>
+                <li class="flex justify-between items-center"><span class="text-slate-300 text-sm font-sans">Joint variation:</span> <span class="bg-slate-900/80 px-2 py-1 rounded text-white border border-slate-700">\(z = kx^{a}y^{b}\)</span></li>
+                <li class="flex justify-between items-center"><span class="text-slate-300 text-sm font-sans">\(z \propto x\) and \(z \propto \frac{1}{y}\):</span> <span class="bg-slate-900/80 px-2 py-1 rounded text-white border border-slate-700">\(z = \dfrac{kx}{y}\)</span></li>
+                <li class="flex justify-between items-center"><span class="text-slate-300 text-sm font-sans">Partial variation:</span> <span class="bg-slate-900/80 px-2 py-1 rounded text-white border border-slate-700">\(y = c + ax^{n}\) or \(y = ax^{p} + bx^{q}\)</span></li>
+                <li class="flex justify-between items-center"><span class="text-slate-300 text-sm font-sans">Find k (isolate it):</span> <span class="bg-slate-900/80 px-2 py-1 rounded text-white border border-slate-700">\(k = \dfrac{zy^{b}}{x^{a}}\)</span></li>
+                <li class="flex justify-between items-center"><span class="text-slate-300 text-sm font-sans">% change of z:</span> <span class="bg-slate-900/80 px-2 py-1 rounded text-white border border-slate-700">\((1 \pm p\%)^{a}(1 \mp q\%)^{b}\)</span></li>
+            </ul>
+            <button onclick="toggleCheatSheet()" class="mt-8 w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg active:scale-95 transition">Close</button>
+        </div>
+    </div>
+
+    <!-- AI TUTOR MODAL -->
+    <div id="ai-tutor-modal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm transition-opacity" onclick="if(event.target===this) closeAITutor()">
+        <div class="glass-panel border border-purple-500/50 max-w-lg w-full rounded-2xl shadow-2xl p-6 flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-4">
+                <h3 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-300 flex items-center gap-2">
+                    <span>✨ AI Tutor (HKDSE 導師)</span>
+                </h3>
+                <button onclick="closeAITutor()" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+            </div>
+
+            <div id="ai-content-area" class="flex-1 overflow-y-auto pr-2 space-y-4 text-slate-200 text-sm sm:text-base leading-relaxed">
+                <!-- AI tutor contents rendered here -->
+            </div>
+
+            <button onclick="closeAITutor()" class="mt-6 w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl transition active:scale-95">
+                Got it, thanks!
+            </button>
+        </div>
+    </div>
+
+    <!-- WRONG ANSWER TECHNIQUE REFLECTION MODAL -->
+    <div id="wrong-reflection-modal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center z-[60] p-4 backdrop-blur-md transition-opacity">
+        <div class="glass-panel border-2 border-red-500/40 max-w-md w-full rounded-2xl shadow-2xl p-6 flex flex-col">
+            <div class="flex items-center gap-3 mb-4 border-b border-slate-700 pb-3">
+                <span class="text-3xl">🛑</span>
+                <h3 class="text-xl font-bold text-red-400">Wait! Let's Reflect</h3>
+            </div>
+            <p class="text-slate-300 mb-6 text-sm">You got that one wrong. Before moving on, which <strong>technique</strong> was primarily needed to solve that question?</p>
+
+            <div class="space-y-3">
+                <button onclick="submitWrongReflection('write_equation')" class="w-full text-left px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl transition active:scale-95 flex items-center justify-between group">
+                    <span class="text-sm font-semibold text-slate-200 group-hover:text-white">Write the variation equation</span>
+                    <span class="font-serif bg-slate-900 px-2 py-1 rounded text-xs text-amber-300">\(z = kx^{a}y^{b}\)</span>
+                </button>
+                <button onclick="submitWrongReflection('find_k')" class="w-full text-left px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl transition active:scale-95 flex items-center justify-between group">
+                    <span class="text-sm font-semibold text-slate-200 group-hover:text-white">Find the constant k by substitution</span>
+                    <span class="font-serif bg-slate-900 px-2 py-1 rounded text-xs text-amber-300">\(k = \dfrac{zy^{b}}{x^{a}}\)</span>
+                </button>
+                <button onclick="submitWrongReflection('partial_variation')" class="w-full text-left px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl transition active:scale-95 flex items-center justify-between group">
+                    <span class="text-sm font-semibold text-slate-200 group-hover:text-white">Partial variation: 2 unknowns → 2 equations</span>
+                    <span class="font-serif bg-slate-900 px-2 py-1 rounded text-xs text-amber-300">\(y = c + ax^{n}\)</span>
+                </button>
+                <button onclick="submitWrongReflection('use_a')" class="w-full text-left px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl transition active:scale-95 flex items-center justify-between group">
+                    <span class="text-sm font-semibold text-slate-200 group-hover:text-white">Reuse part (a) result</span>
+                    <span class="font-serif bg-slate-900 px-2 py-1 rounded text-xs text-amber-300">\(f(x) = 3(x+4)^{2} - 3\)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WRONG ANSWER FEEDBACK MODAL -->
+    <div id="feedback-toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-red-950/90 backdrop-blur-md border-2 border-red-500 text-red-100 px-6 py-4 rounded-xl shadow-2xl hidden z-50 text-center max-w-sm w-full transition-all">
+        <div class="flex items-center justify-center gap-2 mb-1">
+            <span class="text-2xl">❌</span>
+            <p class="font-bold text-lg">Incorrect Answer!</p>
+        </div>
+        <p class="text-sm text-red-300 mt-1">Write the variation equation first: y = kx, y = k/x or z = kx^a/y^b. Then substitute the given pair to find k!</p>
+    </div>
+
+    <script>
+        // Deployed Google Apps Script Web App URL
+        const GOOGLE_SCRIPT_URL =
+            'https://script.google.com/macros/s/AKfycbxJo4Y6bWmopW9cw1Mbaww8uJOoAzs_VHbr0y7wlSo4mv7kzbZm3c1urcndhDt31DRp8Q/exec';
+
+        let studentProfile = null;
+        let badgeRecords = { level1: false, level2: false, level3: false };
+        let currentLevel = 1;
+        let currentQuestionIndex = 0;
+        let lives = 5;
+        let currentQuestions = [];
+        let currentQuestionMode = 'mc'; // state for current specific question
+        let currentSets = [];    // Level 3: array of question sets (each set = array of parts)
+        let currentSetIndex = 0;
+        let activePart = null;   // the part currently being answered (for reflection / AI tutor)
+
+        // --- SCORE BOARD ---
+        // Full marks per level = 5 questions × per-question marks (2 / 3 / 6).
+        // Marks deducted per heart lost (one question's worth per heart).
+        const MARKS = {
+            1: { full: 10, perHeart: 2 },
+            2: { full: 15, perHeart: 3 },
+            3: { full: 30, perHeart: 6 }
+        };
+        // Hearts per level (5 lives on all three levels)
+        const LEVEL_LIVES = { 1: 5, 2: 5, 3: 5 };
+        // Questions per game (Level 3 = question sets)
+        const NUM_QUESTIONS = 5;
+        let scoreTotals = { level1: 0, level2: 0, level3: 0 };
+
+        // Tracking variables for correct percentage
+        let levelStats = {
+            level1: { correct: 0, total: 0 },
+            level2: { correct: 0, total: 0 },
+            level3: { correct: 0, total: 0 }
+        };
+
+        // ─────────────────────────────────────────────────────────────────────
+        // MATH GENERATOR ENGINE — Ch. 11 Variations (變分)
+        //
+        // Level 1 (Paper 2 MC, 2 marks each): sort_paper2.pdf Ch.11 Q157-172
+        //   V1  SP P2 Q157        joint z ∝ x / y → find y
+        //   V2  PP P2 Q13 / 14 P2 Q13 / 18 P2 Q11 / 21 P2 Q12  which must be constant
+        //   V3  12 P2 Q10         partial y = ax² + b/x → find y
+        //   V4  17 P2 Q12         partial y = c + ax² → find y
+        //   V5  15 P2 Q12 / 20 P2 Q11 / 23 P2 Q13 / 25 P2 Q12  z ∝ x^m y^n → find z
+        //   V6  16 P2 Q12 / 19 P2 Q13 / 24 P2 Q13  % change of z
+        //   V7  22 P2 Q13         I / II / III true statements
+        //   V8  13 P2 Q13         % change of the non-subject x
+        //
+        // Level 2 (Paper 1 part (a) only, 2014 onwards, 3 marks each): sort_paper1.pdf Ch.11
+        //   W1  14 P1 Q13(a)  f = ax² + c (a < 0) → find f(x3)
+        //   W2  15 P1 Q10(a)  S = c + an → find S(n3)
+        //   W3  17 P1 Q8(a)   y = k/√x → express y in terms of x
+        //   W4  19 P1 Q10(a)  h = c + ax → find h(x)
+        //   W5  21 P1 Q10(a)  f = c + a(x+b)² → find f(0)
+        //   W6  22 P1 Q10(a)  f = ax² + bx → find f(x)
+        //   W7  23 P1 Q12(a)  f = c + ax² (a > 0) → find f(x3)
+        //   W8  20 P1 Q10(a)  P = c + ah³ → find P(h3)
+        //
+        // Level 3 (Paper 1 full questions, 2014 onwards, 6 marks each): sort_paper1.pdf Ch.11
+        //   S1  16 P1 Q8   f = ax + bx²     (a) find f(x) (b) solve f(x) = T
+        //   S2  17 P1 Q8   y = k/√x         (a) express y (b) change in y
+        //   S3  19 P1 Q10  h = c + ax       (a) find h(x) (b) solve h(x) = 3x²
+        //   S4  21 P1 Q10  f = c + a(x+b)²  (a) find f(0) (b) intercepts of G
+        //   S5  22 P1 Q10  f = ax² + bx     (a) find f(x) (b) intercepts of y = 8f(x) (c) range of k
+        //   S6  23 P1 Q12  f = c + ax²      (a) find f(x3) (b) circumference of C in terms of π
+        //   S7  24 P1 Q10  g = c + ax       (a) find g(x) (b) range of k
+        // (Sample P1 Q48 / Practice P1 Q49 pre-2013 → excluded; 12 P1 Q50 and 13 P1 Q11 excluded by rule;
+        //  15 P1 Q10 and 20 P1 Q10 explain questions removed by teacher instruction, their part (a)
+        //  types remain in Level 2 as W2/W8; 18 P1 Q18 and 25 P1 Q11 are type-duplicates → not repeated)
+        // ─────────────────────────────────────────────────────────────────────
+        const MathGen = {
+            rand: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
+            shuffle: (array) => [...array].sort(() => Math.random() - 0.5),
+            money: (n) => '\\$' + String(n),
+            int: (x) => Math.abs(x - Math.round(x)) < 1e-6,
+            tx: (s) => '\\text{' + s + '}',
+            fr: (num, den) => '\\frac{' + num + '}{' + den + '}',
+            pw: (sym, n) => (n === 1) ? sym : sym + '^{' + n + '}',
+            // Build 4 unique numeric values starting from correct
+            uniq: function (correct, cands) {
+                const out = [correct];
+                for (const c of cands) {
+                    if (out.length >= 4) break;
+                    const v = Math.round(c);
+                    if (v !== correct && out.indexOf(v) === -1) out.push(v);
+                }
+                const steps = [5, 10, -5, 20, -10, 15, 25, -15, 30, -20, 2, -2];
+                let i = 0;
+                while (out.length < 4) {
+                    const v = correct + steps[i % steps.length];
+                    i++;
+                    if (v !== correct && out.indexOf(v) === -1) out.push(v);
+                }
+                return out;
+            },
+            // Wrap TeX strings into shuffled $ ... $ options
+            opts: function (texArr) {
+                return this.shuffle(texArr.map(t => '$ ' + t + ' $'));
+            },
+            // Wording helpers (parsing-friendly, mirrored by the correctness module)
+            pwrWord: function (sym, p) {
+                return p === 1 ? sym : (p === 2 ? 'the square of ' + sym : 'the cube of ' + sym);
+            },
+            // Build the 4 "is increased/decreased by X%" options for %-change MC questions
+            pctChangeOpts: function (dir, cAbs) {
+                const cands = [cAbs + 20, cAbs - 20, cAbs + 10, cAbs - 10, cAbs + 30, cAbs - 30,
+                    cAbs + 40, cAbs - 40, cAbs - 50, cAbs + 15, cAbs - 15, cAbs - 25, 100 - cAbs]
+                    .filter(v => v > 0 && v <= 95 && v !== cAbs);
+                const opp = dir === 'increased' ? 'decreased' : 'increased';
+                const out = [this.tx('is ' + dir + ' by ' + cAbs + '%')];
+                if (cands.length >= 1) out.push(this.tx('is ' + dir + ' by ' + cands[0] + '%'));
+                if (cands.length >= 2) out.push(this.tx('is ' + dir + ' by ' + cands[1] + '%'));
+                const third = (cands.length >= 3) ? cands[2] : ((cAbs + 5 <= 95 && cands.indexOf(cAbs + 5) === -1) ? cAbs + 5 : cAbs - 5);
+                out.push(this.tx('is ' + opp + ' by ' + third + '%'));
+                return out;
+            },
+
+            // ════════════ LEVEL 1 — Paper 2 MC (Q157-172) ════════════
+            generateL1: function (typeIdx) {
+                const t = typeIdx % 8;
+                const instruction = "Solve the variation problem:";
+                let text = '', answerStr = '', mcTex = '', optsTex = [], law = 'write_equation', src = '';
+
+                if (t === 0) {
+                    // V1: z varies directly as x and inversely as y → find y (SP P2 Q157)
+                    const k = this.rand(2, 5);
+                    const y1 = this.rand(2, 5);
+                    const x1 = y1 * this.rand(2, 5);
+                    const z1 = k * x1 / y1;
+                    let y2, x2, z2, tries = 0;
+                    do {
+                        y2 = this.rand(2, 5);
+                        x2 = y2 * this.rand(2, 5);
+                        z2 = k * x2 / y2;
+                        tries++;
+                    } while (tries < 100 && (y2 === y1 || x2 === x1 || z2 === z1));
+                    text = `It is given that z varies directly as x and inversely as y. When x = ${x1} and y = ${y1}, z = ${z1}. When x = ${x2} and z = ${z2}, find y.`;
+                    answerStr = String(y2); mcTex = String(y2);
+                    optsTex = this.uniq(y2, [y1, x2 / z2, k * x2 / z2, z2]).map(String);
+                    law = 'find_k'; src = 'SP P2 Q157';
+                } else if (t === 1) {
+                    // V2: which must be constant (PP P2 Q13 / 14 P2 Q13 / 18 P2 Q11 / 21 P2 Q12)
+                    const a = [1, 2, 3][this.rand(0, 2)], b = [1, 2, 3][this.rand(0, 2)];
+                    const X = this.pw('x', a), Y = this.pw('y', b);
+                    text = `It is given that z varies directly as ${this.pwrWord('x', a)} and inversely as ${this.pwrWord('y', b)}. Which of the following must be constant?`;
+                    mcTex = this.fr('z ' + Y, X);
+                    optsTex = [mcTex, this.fr(X, 'z ' + Y), this.fr('z', X + ' ' + Y), this.fr(X + ' ' + Y, 'z')];
+                    answerStr = mcTex; law = 'write_equation';
+                    src = 'PP P2 Q13 / 14 P2 Q13 / 18 P2 Q11 / 21 P2 Q12';
+                } else if (t === 2) {
+                    // V3: y partly varies directly as x² and partly inversely as x → find y (12 P2 Q10)
+                    const a = [-3, -2, -1, 1, 2, 3][this.rand(0, 5)];
+                    const x1 = [1, 2][this.rand(0, 1)];
+                    const x2 = x1 === 1 ? [2, 4][this.rand(0, 1)] : 4;
+                    let x3, b, y3, tries = 0;
+                    do {
+                        b = x1 * x2 * this.rand(1, 3);
+                        x3 = [-2, -3, 3, 4][this.rand(0, 3)];
+                        y3 = a * x3 * x3 + b / x3;
+                        tries++;
+                    } while (tries < 100 && (x3 === x1 || x3 === x2 || !Number.isInteger(y3)));
+                    const y1 = a * x1 * x1 + b / x1, y2 = a * x2 * x2 + b / x2;
+                    text = `It is given that y partly varies directly as x² and partly varies inversely as x. When x = ${x1}, y = ${y1} and when x = ${x2}, y = ${y2}. When x = ${x3}, find y.`;
+                    answerStr = String(y3); mcTex = String(y3);
+                    optsTex = this.uniq(y3, [y1, y2, a * x3 * x3, b / x3]).map(String);
+                    law = 'partial_variation'; src = '12 P2 Q10';
+                } else if (t === 3) {
+                    // V4: y = constant + varies as x² → find y (17 P2 Q12)
+                    const a = this.rand(1, 4), c = this.rand(1, 9);
+                    const x1 = this.rand(1, 2), x2 = x1 + this.rand(1, 2), x3 = x2 + this.rand(1, 2);
+                    const y1 = c + a * x1 * x1, y2 = c + a * x2 * x2, y3 = c + a * x3 * x3;
+                    text = `It is given that y is the sum of two parts, one part is a constant and the other part varies as x². When x = ${x1}, y = ${y1} and when x = ${x2}, y = ${y2}. If x = ${x3}, find y.`;
+                    answerStr = String(y3); mcTex = String(y3);
+                    optsTex = this.uniq(y3, [y1, y2, c + a * x3, a * x3 * x3]).map(String);
+                    law = 'partial_variation'; src = '17 P2 Q12';
+                } else if (t === 4) {
+                    // V5: z varies as x^m and (inversely as) y^n → find z (15 P2 Q12 / 20 P2 Q11 / 23 P2 Q13 / 25 P2 Q12)
+                    const m = [1, 2, 3][this.rand(0, 2)], n = [1, 2, 3][this.rand(0, 2)];
+                    const inv = Math.random() > 0.5;
+                    const k = this.rand(1, 4);
+                    let x1, x2, y1, y2, z1, z2, tries = 0;
+                    do {
+                        x1 = this.rand(2, 3);
+                        x2 = this.rand(2, 4);
+                        while (x2 === x1) x2 = this.rand(2, 4);
+                        y1 = this.rand(1, 2);
+                        y2 = inv ? this.rand(1, 2) : [2, -2, 1, -1][this.rand(0, 3)];
+                        z1 = inv ? k * Math.pow(x1, m) / Math.pow(y1, n) : k * Math.pow(x1, m) * Math.pow(y1, n);
+                        z2 = inv ? k * Math.pow(x2, m) / Math.pow(y2, n) : k * Math.pow(x2, m) * Math.pow(y2, n);
+                        tries++;
+                    } while (tries < 100 && (!Number.isInteger(z1) || !Number.isInteger(z2) || z2 === z1));
+                    text = `It is given that z varies as ${this.pwrWord('x', m)} and ${inv ? 'inversely as ' : ''}${this.pwrWord('y', n)}. When x = ${x1} and y = ${y1}, z = ${z1}. When x = ${x2} and y = ${y2}, find z.`;
+                    answerStr = String(z2); mcTex = String(z2);
+                    optsTex = this.uniq(z2, [z1, -z2, z2 - z1, z2 + z1]).map(String);
+                    law = 'find_k'; src = '15 P2 Q12 / 20 P2 Q11 / 23 P2 Q13 / 25 P2 Q12';
+                } else if (t === 5) {
+                    // V6: % change of z (16 P2 Q12 / 19 P2 Q13 / 24 P2 Q13)
+                    const aChoices = [['x', 1], ['the square of x', 2], ['the square root of x', 0.5]];
+                    const bChoices = [['y', 1], ['the square of y', 2], ['the square root of y', 0.5]];
+                    let A = '', B = '', a = 1, b = 1, p = 20, q = 20, s1 = 1, s2 = -1, f = 1, c = 0, tries = 0;
+                    do {
+                        const ac = aChoices[this.rand(0, 2)];
+                        const bc = bChoices[this.rand(0, 2)];
+                        A = ac[0]; a = ac[1]; B = bc[0]; b = bc[1];
+                        p = [20, 30, 40, 50, 60, 64][this.rand(0, 5)];
+                        q = [20, 30, 40, 50, 60][this.rand(0, 4)];
+                        s1 = Math.random() > 0.5 ? 1 : -1;
+                        s2 = Math.random() > 0.5 ? 1 : -1;
+                        f = Math.pow(1 + s1 * p / 100, a) * Math.pow(1 + s2 * q / 100, -b);
+                        c = Math.round((f - 1) * 100);
+                        tries++;
+                    } while (tries < 300 && (Math.abs(c) < 10 || Math.abs(c) > 90));
+                    if (Math.abs(c) < 10 || Math.abs(c) > 90) {
+                        p = 20; q = 60; s1 = -1; s2 = -1;
+                        f = Math.pow(1 + s1 * p / 100, a) * Math.pow(1 + s2 * q / 100, -b);
+                        c = Math.round((f - 1) * 100);
+                    }
+                    const dir = f > 1 ? 'increased' : 'decreased';
+                    const cAbs = Math.abs(c);
+                    optsTex = this.pctChangeOpts(dir, cAbs);
+                    text = `It is given that z varies directly as ${A} and inversely as ${B}. If x is ${s1 > 0 ? 'increased' : 'decreased'} by ${p}% and y is ${s2 > 0 ? 'increased' : 'decreased'} by ${q}%, then z`;
+                    answerStr = 'is ' + dir + ' by ' + cAbs + '%';
+                    mcTex = this.tx(answerStr);
+                    law = 'write_equation'; src = '16 P2 Q12 / 19 P2 Q13 / 24 P2 Q13';
+                } else if (t === 6) {
+                    // V7: I / II / III true statements (22 P2 Q13)
+                    const s = [1, 2][this.rand(0, 1)];
+                    const W = s === 1 ? 'w' : 'the square of w';
+                    const stT1 = s === 1
+                        ? 'u² varies directly as v and inversely as the square of w.'
+                        : 'u² varies directly as v and inversely as the fourth power of w.';
+                    const stF = s === 1
+                        ? 'v varies directly as u and inversely as w.'
+                        : 'v varies directly as u and inversely as the square of w.';
+                    const stT2 = s === 1
+                        ? 'w varies directly as the square root of v and inversely as u.'
+                        : 'w varies directly as the fourth root of v and inversely as the square root of u.';
+                    const order = this.shuffle([0, 1, 2]);
+                    const sts = [stT1, stF, stT2];
+                    const stI = sts[order[0]], stII = sts[order[1]], stIII = sts[order[2]];
+                    const falsePos = order.indexOf(1);
+                    const ansLabel = falsePos === 0 ? 'II and III only' : (falsePos === 1 ? 'I and III only' : 'I and II only');
+                    text = `If u varies directly as the square root of v and inversely as ${W}, which of the following are true? I. ${stI} II. ${stII} III. ${stIII}`;
+                    answerStr = ansLabel; mcTex = this.tx(ansLabel);
+                    optsTex = ['I and II only', 'I and III only', 'II and III only', 'I, II and III'].map(l => this.tx(l));
+                    law = 'write_equation'; src = '22 P2 Q13';
+                } else {
+                    // V8: % change of the non-subject x (13 P2 Q13): z ∝ x^a / y^b, y & z change → % change of x
+                    const aChoices = [['x', 1], ['the square of x', 2], ['the square root of x', 0.5]];
+                    const bChoices = [['y', 1], ['the square of y', 2], ['the square root of y', 0.5]];
+                    let A = '', B = '', a = 1, b = 1, q = 20, r = 20, s2 = 1, s3 = -1, f = 1, c = 0, tries = 0;
+                    do {
+                        const ac = aChoices[this.rand(0, 2)];
+                        const bc = bChoices[this.rand(0, 2)];
+                        A = ac[0]; a = ac[1]; B = bc[0]; b = bc[1];
+                        q = [20, 30, 40, 50, 60, 64][this.rand(0, 5)];
+                        r = [20, 30, 40, 50, 60][this.rand(0, 4)];
+                        s2 = Math.random() > 0.5 ? 1 : -1;
+                        s3 = Math.random() > 0.5 ? 1 : -1;
+                        f = Math.pow(1 + s3 * r / 100, 1 / a) * Math.pow(1 + s2 * q / 100, b / a);
+                        c = Math.round((f - 1) * 100);
+                        tries++;
+                    } while (tries < 300 && (Math.abs(c) < 10 || Math.abs(c) > 90));
+                    if (Math.abs(c) < 10 || Math.abs(c) > 90) {
+                        q = 64; r = 25; s2 = -1; s3 = 1;
+                        f = Math.pow(1 + s3 * r / 100, 1 / a) * Math.pow(1 + s2 * q / 100, b / a);
+                        c = Math.round((f - 1) * 100);
+                    }
+                    const dir = f > 1 ? 'increased' : 'decreased';
+                    const cAbs = Math.abs(c);
+                    optsTex = this.pctChangeOpts(dir, cAbs);
+                    text = `It is given that z varies directly as ${A} and inversely as ${B}. If y is ${s2 > 0 ? 'increased' : 'decreased'} by ${q}% and z is ${s3 > 0 ? 'increased' : 'decreased'} by ${r}%, then x`;
+                    answerStr = 'is ' + dir + ' by ' + cAbs + '%';
+                    mcTex = this.tx(answerStr);
+                    law = 'write_equation'; src = '13 P2 Q13';
+                }
+
+                return {
+                    instruction, paper: 'Paper 2', src,
+                    text, answerStr, mcAnswerStr: mcTex,
+                    options: this.opts(optsTex),
+                    firstStepLaw: law
+                };
+            },
+
+            // ════════════ LEVEL 2 — Paper 1 part (a), 2014+ ════════════
+            generateL2: function (typeIdx) {
+                const t = typeIdx % 8;
+                const instruction = "Solve the variation problem:";
+                let text = '', answerStr = '', mcTex = '', optsTex = [], acceptList = null, src = '';
+                const law = 'partial_variation';
+
+                if (t === 0) {
+                    // W1: f = ax² + c, a < 0 → find f(x3) (14 P1 Q13(a))
+                    const a = [-1, -2, -3, -4, -5][this.rand(0, 4)];
+                    const c = this.rand(20, 80);
+                    const x1 = this.rand(1, 2), x2 = x1 + this.rand(2, 3), x3 = x2 + this.rand(1, 2);
+                    const v1 = a * x1 * x1 + c, v2 = a * x2 * x2 + c, ans = a * x3 * x3 + c;
+                    text = `It is given that f(x) is the sum of two parts, one part varies as x² and the other part is a constant. Suppose that f(${x1}) = ${v1} and f(${x2}) = ${v2}. Find f(${x3}).`;
+                    answerStr = String(ans); mcTex = String(ans);
+                    optsTex = this.uniq(ans, [v1, v2, a * x3 + c, ans - a]).map(String);
+                    src = '14 P1 Q13(a)';
+                } else if (t === 1) {
+                    // W2: S = c + an → find S(n3) (15 P1 Q10(a))
+                    const a = [200, 250, 300, 350, 400, 450][this.rand(0, 5)];
+                    const c = 500 * this.rand(8, 16);
+                    const n1 = 10, n2 = 6, n3 = [16, 18, 20, 22, 24][this.rand(0, 4)];
+                    const S1 = c + a * n1, S2 = c + a * n2, ans = c + a * n3;
+                    text = `When Susan sells n handbags in a month, her income in that month is \\$S. It is given that S is a sum of two parts, one part is a constant and the other part varies as n. When n = ${n1}, S = ${S1}; when n = ${n2}, S = ${S2}. When Susan sells ${n3} handbags in a month, find her income in that month.`;
+                    answerStr = String(ans); mcTex = String(ans);
+                    optsTex = this.uniq(ans, [S1, S2, c, a * n3]).map(String);
+                    src = '15 P1 Q10(a)';
+                } else if (t === 2) {
+                    // W3: y = k/√x → express y in terms of x (17 P1 Q8(a))
+                    let s1, s2;
+                    do {
+                        s1 = [6, 8, 10, 12][this.rand(0, 3)];
+                        s2 = [3, 4, 5, 6, 9][this.rand(0, 4)];
+                    } while (s1 === s2);
+                    const m = this.rand(2, 9);
+                    const x1 = s1 * s1, y1 = s2 * m, k = y1 * s1;
+                    text = `It is given that y varies inversely as the square root of x. When x = ${x1}, y = ${y1}. Express y in terms of x.`;
+                    answerStr = `y = ${k}/√x`;
+                    acceptList = [`y = ${k}/√x`, `${k}/√x`, `y = ${k}/sqrt(x)`, `${k}/sqrt(x)`];
+                    mcTex = `y=\\frac{${k}}{\\sqrt{x}}`;
+                    optsTex = [mcTex, `y=\\frac{\\sqrt{x}}{${k}}`, `y=${k}\\sqrt{x}`, `y=\\frac{${k}}{x}`];
+                    src = '17 P1 Q8(a)';
+                } else if (t === 3) {
+                    // W4: h = c + ax → find h(x) (19 P1 Q10(a))
+                    const a = [12, 24, 36, 48, 60][this.rand(0, 4)];
+                    const c = -a * a / 12;
+                    const x1 = [-2, -3, -4][this.rand(0, 2)], x2 = [4, 5, 6][this.rand(0, 2)];
+                    const v1 = c + a * x1, v2 = c + a * x2;
+                    const term = c >= 0 ? `${a}x + ${c}` : `${a}x − ${Math.abs(c)}`;
+                    answerStr = term;
+                    acceptList = [term, `${a}x - ${Math.abs(c)}`, `${c} + ${a}x`, `${c}+${a}x`];
+                    mcTex = this.tx(term);
+                    optsTex = [this.tx(term), this.tx(`${a}x + ${-c}`), this.tx(`${a}x`), this.tx(`${c}x + ${a}`)];
+                    text = `It is given that h(x) is partly constant and partly varies as x. Suppose that h(${x1}) = ${v1} and h(${x2}) = ${v2}. Find h(x).`;
+                    src = '19 P1 Q10(a)';
+                } else if (t === 4) {
+                    // W5: f = c + a(x+b)² → find f(0) (21 P1 Q10(a))
+                    const a = 3;
+                    let b = this.rand(3, 7), e = this.rand(3, 6);
+                    while (e === b) e = this.rand(3, 6);
+                    const x1 = 1 - b, x2 = e - b;
+                    const v2 = a * (e * e - 1);
+                    const ans = a * (b * b - 1);
+                    text = `It is given that f(x) is partly constant and partly varies as (x + ${b})². Suppose that f(${x1}) = 0 and f(${x2}) = ${v2}. Find f(0).`;
+                    answerStr = String(ans); mcTex = String(ans);
+                    optsTex = this.uniq(ans, [v2, a * b * b, a * (b * b + 1)]).map(String);
+                    src = '21 P1 Q10(a)';
+                } else if (t === 5) {
+                    // W6: f = ax² + bx → find f(x) (22 P1 Q10(a))
+                    const a = [2, 3, 4][this.rand(0, 2)];
+                    const m2 = [2, 3, 4][this.rand(0, 2)];
+                    const b = a * m2;
+                    const x1 = [2, 3, 4][this.rand(0, 2)], x2 = [-3, -4, -5][this.rand(0, 2)];
+                    const v1 = a * x1 * x1 + b * x1, v2 = a * x2 * x2 + b * x2;
+                    const term = (a === 1 ? 'x^2' : a + 'x^2') + ' + ' + (b === 1 ? '' : b) + 'x';
+                    const sw = (b === 1 ? 'x' : b + 'x') + ' + ' + (a === 1 ? 'x^2' : a + 'x^2');
+                    answerStr = term;
+                    acceptList = [term, term.replace(/ /g, ''), sw, sw.replace(/ /g, '')];
+                    mcTex = term.replace(/\^2/g, '^{2}');
+                    optsTex = [mcTex, a + 'x^{2} + ' + (b + 2) + 'x', a + 'x^{2}', b + 'x'];
+                    text = `It is given that f(x) partly varies as x² and partly varies as x. Suppose that f(${x1}) = ${v1} and f(${x2}) = ${v2}. Find f(x).`;
+                    src = '22 P1 Q10(a)';
+                } else if (t === 6) {
+                    // W7: f = c + ax², a > 0 → find f(x3) (23 P1 Q12(a))
+                    const a = this.rand(1, 4), c = this.rand(2, 40);
+                    const x1 = [5, 10, 15][this.rand(0, 2)], x2 = x1 + this.rand(5, 10);
+                    let x3 = [4, 5, 6][this.rand(0, 2)];
+                    while (x3 === x1) x3 = [4, 5, 6][this.rand(0, 2)];
+                    const v1 = c + a * x1 * x1, v2 = c + a * x2 * x2, ans = c + a * x3 * x3;
+                    text = `It is given that f(x) is partly constant and partly varies as x². Suppose that f(${x1}) = ${v1} and f(${x2}) = ${v2}. Find f(${x3}).`;
+                    answerStr = String(ans); mcTex = String(ans);
+                    optsTex = this.uniq(ans, [v1, v2, c, a * x3 * x3]).map(String);
+                    src = '23 P1 Q12(a)';
+                } else {
+                    // W8: P = c + ah³ → find P(h3) (20 P1 Q10(a))
+                    const a = [1, 2, 3][this.rand(0, 2)], c = this.rand(2, 30);
+                    const h1 = [2, 3][this.rand(0, 1)], h2 = h1 + this.rand(2, 4), h3 = h2 + this.rand(1, 2);
+                    const P1 = c + a * h1 * h1 * h1, P2 = c + a * h2 * h2 * h2, ans = c + a * h3 * h3 * h3;
+                    text = `The price of a brand X souvenir of height h cm is \\$P. P is partly constant and partly varies as h³. When h = ${h1}, P = ${P1} and when h = ${h2}, P = ${P2}. Find the price of a brand X souvenir of height ${h3} cm.`;
+                    answerStr = String(ans); mcTex = String(ans);
+                    optsTex = this.uniq(ans, [P1, P2, c + a * h3 * h3, a * h3 * h3 * h3]).map(String);
+                    src = '20 P1 Q10(a)';
+                }
+
+                return {
+                    instruction, paper: 'Paper 1', src,
+                    text, answerStr, mcAnswerStr: mcTex,
+                    acceptList: acceptList || undefined,
+                    options: this.opts(optsTex),
+                    firstStepLaw: law
+                };
+            },
+
+            // ════════════ LEVEL 3 — Paper 1 full questions, 2014+ ════════════
+            generateL3Set: function () {
+                const chosen = this.shuffle([0, 1, 2, 3, 4, 5, 6])[0];
+                if (chosen === 0) return this.setS1();
+                if (chosen === 1) return this.setS2();
+                if (chosen === 2) return this.setS3();
+                if (chosen === 3) return this.setS4();
+                if (chosen === 4) return this.setS5();
+                if (chosen === 5) return this.setS6();
+                return this.setS7();
+            },
+
+            part: function (qHtml, answerStr, mcTex, optsTex, law, acceptList) {
+                return {
+                    qHtml, answerStr, mcAnswerStr: mcTex,
+                    acceptList: acceptList || undefined,
+                    options: this.opts(optsTex),
+                    firstStepLaw: law
+                };
+            },
+
+            // S1: f = ax + bx² (16 P1 Q8) — (a) find f(x) (b) solve f(x) = T
+            setS1: function () {
+                let b, r1, r2, a, T, x1, x2, v1, v2, tries = 0;
+                do {
+                    b = [1, 2][this.rand(0, 1)];
+                    r1 = this.rand(-12, -1);
+                    r2 = this.rand(1, 12);
+                    a = -b * (r1 + r2);
+                    T = -b * r1 * r2;
+                    x1 = [2, 3, 4][this.rand(0, 2)];
+                    x2 = [-2, -3, -4][this.rand(0, 2)];
+                    v1 = a * x1 + b * x1 * x1;
+                    v2 = a * x2 + b * x2 * x2;
+                    tries++;
+                } while (tries < 100 && (a === 0 || T === 0 || v1 === v2 || Math.abs(a) > 30 || Math.abs(T) > 300));
+                const term = (b === 1 ? 'x^2' : b + 'x^2') + (a > 0 ? ' + ' + (a === 1 ? '' : a) + 'x' : ' − ' + (Math.abs(a) === 1 ? '' : Math.abs(a)) + 'x');
+                const sw = (a > 0
+                    ? (a === 1 ? 'x' : a + 'x') + ' + ' + (b === 1 ? 'x^2' : b + 'x^2')
+                    : '−' + (Math.abs(a) === 1 ? 'x' : Math.abs(a) + 'x') + ' + ' + (b === 1 ? 'x^2' : b + 'x^2'));
+                const acc = [term, term.replace(/ /g, ''), sw, sw.replace(/ /g, '')];
+                const termTex = term.replace(/\^2/g, '^{2}').replace(/−/g, '-');
+                const swTex = sw.replace(/\^2/g, '^{2}').replace(/−/g, '-');
+                const pa = this.part(
+                    `It is given that f(x) is the sum of two parts, one part varies as x and the other part varies as x². Suppose that f(${x1}) = ${v1} and f(${x2}) = ${v2}. Find f(x).`,
+                    term, termTex,
+                    [termTex, swTex, b === 1 ? 'x^{2}' : b + 'x^{2}', Math.abs(a) === 1 ? 'x' : Math.abs(a) + 'x'],
+                    'partial_variation', acc
+                );
+                const rl = Math.min(r1, r2), rh = Math.max(r1, r2);
+                const accB = [`${rl} or ${rh}`, `${rh} or ${rl}`, `${rl} and ${rh}`, `${rh} and ${rl}`, `${rl}, ${rh}`, `${rh}, ${rl}`];
+                const pb = this.part(
+                    `Solve the equation f(x) = ${T}.`,
+                    `${rl} or ${rh}`, this.tx(`${rl} or ${rh}`),
+                    [this.tx(`${rl} or ${rh}`), this.tx(String(rl)), this.tx(String(rh)), this.tx(String(rh + 1))],
+                    'use_a', accB
+                );
+                pa.src = pb.src = '16 P1 Q8';
+                return [pa, pb];
+            },
+
+            // S2: y = k/√x (17 P1 Q8) — (a) express y (b) change in y
+            setS2: function () {
+                let s1, s2;
+                do {
+                    s1 = [6, 8, 10, 12][this.rand(0, 3)];
+                    s2 = [3, 4, 5, 6, 8, 9, 10, 12][this.rand(0, 7)];
+                } while (s1 === s2);
+                const m = this.rand(2, 9);
+                const x1 = s1 * s1, x2 = s2 * s2, y1 = s2 * m, k = y1 * s1, y2 = m * s1;
+                const change = y2 - y1;
+                const pa = this.part(
+                    `It is given that y varies inversely as the square root of x. When x = ${x1}, y = ${y1}. Express y in terms of x.`,
+                    `y = ${k}/√x`, `y=\\frac{${k}}{\\sqrt{x}}`,
+                    [`y=\\frac{${k}}{\\sqrt{x}}`, `y=\\frac{\\sqrt{x}}{${k}}`, `y=${k}\\sqrt{x}`, `y=\\frac{${k}}{x}`],
+                    'write_equation',
+                    [`y = ${k}/√x`, `${k}/√x`, `y = ${k}/sqrt(x)`, `${k}/sqrt(x)`]
+                );
+                const pb = this.part(
+                    `If the value of x is ${x2 > x1 ? 'increased' : 'decreased'} from ${x1} to ${x2}, find the change in the value of y.`,
+                    String(change), String(change),
+                    this.uniq(change, [y2, y1, y1 + y2, k / x2]).map(String),
+                    'use_a',
+                    change < 0
+                        ? [String(change), `decreased by ${-change}`, `decrease of ${-change}`]
+                        : [String(change), `increased by ${change}`, `increase of ${change}`]
+                );
+                pa.src = pb.src = '17 P1 Q8';
+                return [pa, pb];
+            },
+
+            // S3: h = c + ax (19 P1 Q10) — (a) find h(x) (b) solve h(x) = 3x²
+            setS3: function () {
+                const t2 = this.rand(2, 6);
+                const a = 12 * t2;
+                const c = -12 * t2 * t2;
+                const x1 = [-2, -3, -4][this.rand(0, 2)], x2 = [4, 5, 6][this.rand(0, 2)];
+                const v1 = c + a * x1, v2 = c + a * x2;
+                const term = c >= 0 ? `${a}x + ${c}` : `${a}x − ${Math.abs(c)}`;
+                const acc = [term, `${a}x - ${Math.abs(c)}`, `${c} + ${a}x`, `${c}+${a}x`];
+                const pa = this.part(
+                    `It is given that h(x) is partly constant and partly varies as x. Suppose that h(${x1}) = ${v1} and h(${x2}) = ${v2}. Find h(x).`,
+                    term, this.tx(term),
+                    [this.tx(term), this.tx(`${a}x + ${-c}`), this.tx(`${a}x`), this.tx(`${c}x + ${a}`)],
+                    'partial_variation', acc
+                );
+                const root = 2 * t2;
+                const pb = this.part(
+                    `Solve the equation h(x) = 3x².`,
+                    String(root), String(root),
+                    this.uniq(root, [t2, 3 * t2, -root, a / 6]).map(String),
+                    'use_a'
+                );
+                pa.src = pb.src = '19 P1 Q10';
+                return [pa, pb];
+            },
+
+            // S4: f = c + a(x+b)² (21 P1 Q10) — (a) f(0) (b) intercepts of G
+            setS4: function () {
+                const a = 3;
+                let b = this.rand(3, 7), e = this.rand(3, 6);
+                while (e === b) e = this.rand(3, 6);
+                const x1 = 1 - b, x2 = e - b;
+                const v2 = a * (e * e - 1);
+                const f0 = a * (b * b - 1);
+                const yInt = f0 + 3;
+                const pa = this.part(
+                    `It is given that f(x) is partly constant and partly varies as (x + ${b})². Suppose that f(${x1}) = 0 and f(${x2}) = ${v2}. Find f(0).`,
+                    String(f0), String(f0),
+                    this.uniq(f0, [v2, a * b * b, a * (b * b + 1)]).map(String),
+                    'partial_variation'
+                );
+                const pb1 = this.part(
+                    `Denote the graph of y = f(x) + 3 by G. Write down the y-intercept of G.`,
+                    String(yInt), String(yInt),
+                    this.uniq(yInt, [f0, v2 + 3, 3 * b * b + 3]).map(String),
+                    'use_a'
+                );
+                const pb2 = this.part(
+                    `Find the x-intercept(s) of G.`,
+                    String(-b), String(-b),
+                    this.uniq(-b, [b, x1, x2, -b - 1]).map(String),
+                    'use_a'
+                );
+                pa.src = pb1.src = pb2.src = '21 P1 Q10';
+                return [pa, pb1, pb2];
+            },
+
+            // S5: f = ax² + bx (22 P1 Q10) — (a) find f(x) (b) intercepts of y = 8f(x) (c) range of k
+            setS5: function () {
+                const a = 4;
+                const m = [1, 2, 3][this.rand(0, 2)];
+                const b = a * m;
+                const x1 = [2, 3, 4][this.rand(0, 2)], x2 = [-3, -4, -5][this.rand(0, 2)];
+                const v1 = a * x1 * x1 + b * x1, v2 = a * x2 * x2 + b * x2;
+                const term = a + 'x^2 + ' + (b === 1 ? '' : b) + 'x';
+                const acc = [term, term.replace(/ /g, ''), `${b}x + ${a}x^2`, `${b}x+${a}x^2`];
+                const termTex = a + 'x^{2} + ' + (b === 1 ? '' : b) + 'x';
+                const pa = this.part(
+                    `It is given that f(x) partly varies as x² and partly varies as x. Suppose that f(${x1}) = ${v1} and f(${x2}) = ${v2}. Find f(x).`,
+                    term, termTex,
+                    [termTex, `${b}x + ${a}x^{2}`, a + 'x^{2}', b + 'x'],
+                    'partial_variation', acc
+                );
+                const r1 = 0, r2 = -m;
+                const accB = [`${r1} and ${r2}`, `${r2} and ${r1}`, `${r1} or ${r2}`, `${r2} or ${r1}`, `${r1}, ${r2}`, `${r2}, ${r1}`];
+                const pb = this.part(
+                    `Write down the x-intercept(s) of the graph of y = 8f(x).`,
+                    `${r1} and ${r2}`, this.tx(`${r1} and ${r2}`),
+                    [this.tx(`${r1} and ${r2}`), this.tx(String(r2)), this.tx(String(r1)), this.tx(String(r2 - 1))],
+                    'use_a', accB
+                );
+                const K = -m * m;
+                const accC = [`k > ${K}`, `k>${K}`, `k is greater than ${K}`];
+                const pc = this.part(
+                    `Let k be a real constant. Find the range of values of k such that the equation f(x) = k has two distinct real roots.`,
+                    `k > ${K}`, this.tx(`k > ${K}`),
+                    [this.tx(`k > ${K}`), this.tx(`k < ${K}`), this.tx(`k ≥ ${K}`), this.tx(`k ≤ ${K}`)],
+                    'use_a', accC
+                );
+                pa.src = pb.src = pc.src = '22 P1 Q10';
+                return [pa, pb, pc];
+            },
+
+            // S6: f = c + ax² (23 P1 Q12) — (a) f(x3) (b) circumference of C in terms of π
+            setS6: function () {
+                const combos = [[5, 12, 13, [10, 15, 20]], [3, 4, 5, [6, 9, 12]], [8, 15, 17, [16, 24]], [6, 8, 10, [9, 12]], [4, 3, 5, [8, 12]]];
+                const [x3, k3, d, xlist] = combos[this.rand(0, combos.length - 1)];
+                const c = this.rand(5, 30);
+                const idx1 = this.rand(0, xlist.length - 1);
+                let idx2 = this.rand(0, xlist.length - 1);
+                while (idx2 === idx1) idx2 = this.rand(0, xlist.length - 1);
+                const x1 = xlist[idx1], x2 = xlist[idx2];
+                const v1 = c + k3 * x1 * x1 / (x3 * x3), v2 = c + k3 * x2 * x2 / (x3 * x3);
+                const ans = c + k3;
+                const pa = this.part(
+                    `It is given that f(x) is partly constant and partly varies as x². Suppose that f(${x1}) = ${v1} and f(${x2}) = ${v2}. Find f(${x3}).`,
+                    String(ans), String(ans),
+                    this.uniq(ans, [v1, v2, c, c + 2 * k3]).map(String),
+                    'partial_variation'
+                );
+                const pb = this.part(
+                    `Suppose that U(0, u) and V(${x3}, v) are points lying on the graph of y = f(x). The horizontal line passing through V cuts the y-axis at the point W. Denote the circle which passes through U, V and W by C. Express the circumference of C in terms of π.`,
+                    `${d}π`, `${d}\\pi`,
+                    [`${d}\\pi`, `${x3}\\pi`, `${k3}\\pi`, `${d + x3}\\pi`],
+                    'use_a', [`${d}π`, `${d}pi`, `${d} pi`]
+                );
+                pa.src = pb.src = '23 P1 Q12';
+                return [pa, pb];
+            },
+
+            // S7: g = c + ax (24 P1 Q10) — (a) find g(x) (b) range of k
+            setS7: function () {
+                const a = [2, 3, 4][this.rand(0, 2)];
+                const t2 = [2, 3, 4][this.rand(0, 2)];
+                const c = 2 * a * t2;
+                const K = a * t2 * t2;
+                const x1 = [-3, -4][this.rand(0, 1)], x2 = [6, 7, 8][this.rand(0, 2)];
+                const v1 = c + a * x1, v2 = c + a * x2;
+                const term = `${a}x + ${c}`;
+                const acc = [term, term.replace(/ /g, ''), `${c} + ${a}x`, `${c}+${a}x`];
+                const pa = this.part(
+                    `It is given that g(x) is partly constant and partly varies as x. Suppose that g(${x1}) = ${v1} and g(${x2}) = ${v2}. Find g(x).`,
+                    term, this.tx(term),
+                    [this.tx(term), this.tx(`${c}x + ${a}`), this.tx(`${a}x`), this.tx(`${c}`)],
+                    'partial_variation', acc
+                );
+                const accC = [`k ≤ ${K}`, `k <= ${K}`, `k=<${K}`, `k is less than or equal to ${K}`];
+                const pb = this.part(
+                    `Let h(x) = x g(x) + k, where k is a real constant. If all the roots of the equation h(x) = 0 are real numbers, find the range of values of k.`,
+                    `k ≤ ${K}`, this.tx(`k ≤ ${K}`),
+                    [this.tx(`k ≤ ${K}`), this.tx(`k ≥ ${K}`), this.tx(`k < ${K}`), this.tx(`k > ${K}`)],
+                    'use_a', accC
+                );
+                pa.src = pb.src = '24 P1 Q10';
+                return [pa, pb];
+            }
+
+            // ════════════ END OF GENERATORS ════════════
+        };
+
+        // --- ANSWER NORMALIZATION (lenient numeric / expression checking) ---
+        // Keeps meaning-bearing chars: / ( ) ^ < > = . - and digits/letters.
+        // Maps ² ³ √ π − ≤ ≥ to ASCII forms; x^2 collapses to x2 (so x^2, x2, x² all match);
+        // relation signs survive so "k > -4" never matches "k < -4" or "k = -4".
+        function normAns(s) {
+            return String(s).toLowerCase()
+                .replace(/−/g, '-')
+                .replace(/π/g, 'pi')
+                .replace(/²/g, '^2')
+                .replace(/³/g, '^3')
+                .replace(/√/g, 'sqrt')
+                .replace(/≤/g, '<=')
+                .replace(/≥/g, '>=')
+                .replace(/=</g, '<=')
+                .replace(/=>/g, '>=')
+                .replace(/([a-z])\^(\d+)/g, '$1$2')
+                .replace(/(?<![<>])=(?![<>])/g, '')
+                .replace(/[+\s*×]/g, '');
+        }
+
+        function checkFillAnswer(cleanInput, q) {
+            const acc = q.acceptList || [q.answerStr];
+            const ni = normAns(cleanInput);
+            for (const a of acc) {
+                const na = normAns(a);
+                if (ni === na) return true;
+                if (/^-?\d+(\.\d+)?$/.test(ni) && /^-?\d+(\.\d+)?$/.test(na) &&
+                    Math.abs(parseFloat(ni) - parseFloat(na)) < 1e-6) return true;
+            }
+            return false;
+        }
+
+        // --- CORE GAME LOGIC ---
+
+        function login() {
+            const sClass = document.getElementById('student-class').value.trim().toUpperCase();
+            const sNo = document.getElementById('student-no').value.trim();
+            const sName = document.getElementById('student-name').value.trim();
+
+            if (!sClass || !sNo || !sName) {
+                showToast("Please fill in all details to start.", "error");
+                return;
+            }
+
+            studentProfile = { class: sClass, no: sNo, name: sName };
+            document.getElementById('display-name').textContent = `Welcome, ${sName}`;
+            document.getElementById('display-class').textContent = sClass;
+            document.getElementById('display-no').textContent = sNo;
+
+            loadScores();
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('dashboard-screen').classList.remove('hidden');
+
+            updatePassportUI();
+            showToast(`Welcome aboard, ${sName}!`, "success");
+        }
+
+        function logout() {
+            studentProfile = null;
+            document.getElementById('dashboard-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('student-class').value = '';
+            document.getElementById('student-no').value = '';
+            document.getElementById('student-name').value = '';
+        }
+
+        function updatePassportUI() {
+            for (let i = 1; i <= 3; i++) {
+                const statusEl = document.getElementById(`badge-status-${i}`);
+                const iconEl = document.getElementById(`badge-icon-${i}`);
+                const cardEl = document.getElementById(`badge-card-${i}`);
+
+                if (badgeRecords[`level${i}`]) {
+                    statusEl.textContent = "Completed ✅";
+                    statusEl.className = "text-sm font-semibold text-green-400";
+                    iconEl.textContent = "🏆";
+                    cardEl.classList.add('border-amber-500');
+                } else {
+                    statusEl.textContent = "Not Attempted";
+                    statusEl.className = "text-sm font-semibold text-slate-500";
+                    iconEl.textContent = "🔒";
+                    cardEl.classList.remove('border-amber-500');
+                }
+            }
+            updateScoreboardUI();
+        }
+
+        // --- SCORE BOARD LOGIC ---
+        function getScoreStorageKey() {
+            if (!studentProfile) return null;
+            return `hkdse_var_score_${studentProfile.class}_${studentProfile.no}_${studentProfile.name}`;
+        }
+
+        function loadScores() {
+            const key = getScoreStorageKey();
+            scoreTotals = { level1: 0, level2: 0, level3: 0 };
+            if (!key) return;
+            try {
+                const raw = localStorage.getItem(key);
+                if (raw) {
+                    const saved = JSON.parse(raw);
+                    if (saved && typeof saved.level1 === 'number') scoreTotals = saved;
+                }
+            } catch (e) { console.log('loadScores error', e); }
+        }
+
+        function saveScores() {
+            const key = getScoreStorageKey();
+            if (!key) return;
+            try {
+                localStorage.setItem(key, JSON.stringify(scoreTotals));
+            } catch (e) { console.log('saveScores error', e); }
+        }
+
+        function updateScoreboardUI() {
+            document.getElementById('score-1').textContent = scoreTotals.level1;
+            document.getElementById('score-2').textContent = scoreTotals.level2;
+            document.getElementById('score-3').textContent = scoreTotals.level3;
+            document.getElementById('total-marks').textContent = scoreTotals.level1 + scoreTotals.level2 + scoreTotals.level3;
+        }
+
+        // Marks for the CURRENT attempt: full minus (hearts lost × per-heart)
+        function currentAttemptMarks() {
+            const cfg = MARKS[currentLevel];
+            if (!cfg) return 0;
+            const heartsLost = Math.max(0, LEVEL_LIVES[currentLevel] - lives);
+            return Math.max(0, cfg.full - heartsLost * cfg.perHeart);
+        }
+
+        function updateLiveScore() {
+            const el = document.getElementById('live-score');
+            if (el) el.textContent = currentAttemptMarks();
+        }
+
+        function resetBadges() {
+            if(confirm("Are you sure you want to reset your progress and marks?")) {
+                badgeRecords = { level1: false, level2: false, level3: false };
+                levelStats = { level1: { correct: 0, total: 0 }, level2: { correct: 0, total: 0 }, level3: { correct: 0, total: 0 } };
+                scoreTotals = { level1: 0, level2: 0, level3: 0 };
+                saveScores();
+                updatePassportUI();
+                showToast("Progress and marks reset.", "info");
+            }
+        }
+
+        function startGame(level) {
+            currentLevel = level;
+            document.getElementById('dashboard-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            const levelColors = ['text-green-400', 'text-amber-400', 'text-red-400'];
+            document.getElementById('level-indicator').className = `font-bold ${levelColors[level-1]}`;
+            document.getElementById('level-indicator').textContent = `Level ${level}`;
+
+            lives = LEVEL_LIVES[level];
+            currentQuestionIndex = 0;
+            currentQuestions = [];
+            currentSets = [];
+            currentSetIndex = 0;
+            activePart = null;
+            updateLiveScore();
+
+            if (level === 3) {
+                // Level 3: 5 multi-part question sets; each set shown as (a)(b) blocks on one page
+                const usedTexts = new Set();
+                const usedOpts = new Set();
+                const usedAns = new Set();
+                for (let i = 0; i < NUM_QUESTIONS; i++) {
+                    let parts = null, tKey = null, oKey = null, aKey = null, tries = 0;
+                    do {
+                        parts = MathGen.generateL3Set();
+                        tKey = parts.map(p => p.qHtml).join('|');
+                        oKey = parts.map(p => [...p.options].sort().join('~')).join('|');
+                        aKey = parts.map(p => p.answerStr).join('|');
+                        tries++;
+                    } while ((usedTexts.has(tKey) || usedOpts.has(oKey) || usedAns.has(aKey)) && tries < 100);
+                    usedTexts.add(tKey);
+                    usedOpts.add(oKey);
+                    usedAns.add(aKey);
+                    parts.forEach((part, pi) => {
+                        part.setNo = i + 1;
+                        part.partIdx = pi;
+                        part.partLabel = part.partLabel || ['(a)', '(b)', '(c)'][pi];
+                        part.paper = 'Paper 1';
+                        part.done = false;
+                        // Paper 1 → conventional fill-in only
+                        part.mode = 'fill';
+                    });
+                    currentSets.push(parts);
+                }
+                updateLivesUI();
+                renderSet();
+                return;
+            }
+
+            // Levels 1 & 2: 5 single questions (Paper 2 → MC, Paper 1 → fill-in)
+            const typeOrder = (level === 1)
+                ? MathGen.shuffle([0, 1, 2, 3, 4, 5, 6, 7]).slice(0, NUM_QUESTIONS)
+                : MathGen.shuffle([0, 1, 2, 3, 4, 5, 6, 7]).slice(0, NUM_QUESTIONS);
+            const usedTexts = new Set();
+            const usedOpts = new Set();
+            const usedAns = new Set();
+            for(let i=0; i<NUM_QUESTIONS; i++) {
+                let q = null, tKey = null, oKey = null, aKey = null, tries = 0;
+                do {
+                    q = (level === 1) ? MathGen.generateL1(typeOrder[i]) : MathGen.generateL2(typeOrder[i]);
+                    tKey = q.text;
+                    oKey = [...q.options].sort().join('~');
+                    aKey = q.answerStr;
+                    tries++;
+                } while ((usedTexts.has(tKey) || usedOpts.has(oKey) || usedAns.has(aKey)) && tries < 300);
+                usedTexts.add(tKey);
+                usedOpts.add(oKey);
+                usedAns.add(aKey);
+                currentQuestions.push(q);
+            }
+
+            updateLivesUI();
+            renderQuestion();
+        }
+
+        function updateLivesUI() {
+            const container = document.getElementById('lives-container');
+            const maxLives = LEVEL_LIVES[currentLevel];
+            container.innerHTML = '';
+            for (let i = 0; i < lives; i++) {
+                container.innerHTML += '<span class="heart-bounce">❤️</span>';
+            }
+            for (let i = lives; i < maxLives; i++) {
+                container.innerHTML += '<span class="opacity-30 grayscale">❤️</span>';
+            }
+        }
+
+        function renderQuestion() {
+            document.getElementById('q-counter').textContent = `${currentQuestionIndex + 1}/${currentQuestions.length}`;
+            const q = currentQuestions[currentQuestionIndex];
+
+            // Ensure single-question UI is visible and L3 area hidden
+            document.getElementById('l3-area').classList.add('hidden');
+            document.getElementById('question-display').classList.remove('hidden');
+
+            const displayEl = document.getElementById('question-display');
+            displayEl.innerHTML = q.text;
+
+            document.getElementById('question-instruction').textContent = q.instruction;
+            document.getElementById('paper-hint').textContent =
+                (q.paper === 'Paper 1') ? 'DSE Paper 1 · ' + q.src : 'DSE Paper 2 · ' + q.src;
+
+            const partLabelEl = document.getElementById('part-label');
+            partLabelEl.textContent = '';
+            partLabelEl.classList.add('hidden');
+
+            // TEACHER'S RULE: Paper 2 → MC, Paper 1 → conventional fill-in
+            currentQuestionMode = (q.paper === 'Paper 2') ? 'mc' : 'fill';
+
+            const mcArea = document.getElementById('mc-options');
+            const fillArea = document.getElementById('conventional-area');
+            const hint = document.getElementById('format-hint');
+
+            if (currentQuestionMode === 'mc') {
+                mcArea.classList.remove('hidden');
+                fillArea.classList.add('hidden');
+                hint.textContent = "Multiple Choice Mode";
+
+                const btns = mcArea.querySelectorAll('button');
+                btns.forEach((btn, idx) => {
+                    btn.innerHTML = q.options[idx];
+                });
+            } else {
+                mcArea.classList.add('hidden');
+                fillArea.classList.remove('hidden');
+                hint.textContent = "Fill-in Mode";
+
+                document.getElementById('conventional-input').value = '';
+                document.getElementById('math-preview').textContent = 'Empty';
+
+                // Inject helper buttons
+                const helperBox = document.getElementById('helper-buttons');
+                helperBox.innerHTML = '';
+                ['π', '√', '^', '²', '³', '(', ')', '+', '-', '.'].forEach(ch => {
+                    helperBox.innerHTML += `<button onclick="insertAtCursor('${ch}')" class="bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded text-white font-mono text-sm transition">${ch}</button>`;
+                });
+            }
+
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        }
+
+        // --- Level 3: render the whole question set as (a)(b) blocks on one page ---
+        function renderSet() {
+            const set = currentSets[currentSetIndex];
+            document.getElementById('q-counter').textContent = `Set ${currentSetIndex + 1}/${currentSets.length}`;
+            document.getElementById('question-instruction').textContent = "Answer all parts of the question:";
+            document.getElementById('paper-hint').textContent = 'DSE Paper 1 · ' + set[0].src + ' · Multi-part';
+            document.getElementById('format-hint').textContent = set[0].mode === 'mc' ? 'Multiple Choice Mode' : 'Fill-in Mode';
+
+            const partLabelEl = document.getElementById('part-label');
+            partLabelEl.textContent = '';
+            partLabelEl.classList.add('hidden');
+
+            // Hide single-question UI, show L3 area
+            document.getElementById('question-display').classList.add('hidden');
+            document.getElementById('mc-options').classList.add('hidden');
+            document.getElementById('conventional-area').classList.add('hidden');
+            const l3Area = document.getElementById('l3-area');
+            l3Area.classList.remove('hidden');
+
+            const blocksEl = document.getElementById('l3-blocks');
+            blocksEl.innerHTML = '';
+
+            set.forEach((part, pi) => {
+                const block = document.createElement('div');
+                block.id = `l3-block-${pi}`;
+                block.className = `bg-slate-800/60 border ${part.done ? 'border-green-500/70' : 'border-slate-700'} rounded-2xl p-4 transition-all duration-300`;
+                blocksEl.appendChild(block);
+                rebuildL3Block(pi);
+            });
+
+            if (window.MathJax) MathJax.typesetPromise();
+        }
+
+        function insertL3Char(pi, ch) {
+            const f = document.getElementById(`l3-input-${pi}`);
+            const start = f.selectionStart ?? f.value.length;
+            const end = f.selectionEnd ?? f.value.length;
+            f.value = f.value.substring(0, start) + ch + f.value.substring(end, f.value.length);
+            const pos = start + ch.length;
+            f.setSelectionRange(pos, pos);
+            f.focus();
+            updateL3Preview(pi);
+        }
+
+        function updateL3Preview(pi) {
+            const input = document.getElementById(`l3-input-${pi}`).value;
+            const previewBox = document.getElementById(`l3-preview-${pi}`);
+            if (!previewBox) return;
+            previewBox.textContent = input.trim() ? prettyPreview(input) : 'Empty';
+        }
+
+        function submitSetPartMC(pi, btnIdx) {
+            const set = currentSets[currentSetIndex];
+            const part = set[pi];
+            if (part.done) return;
+            activePart = part;
+            const isCorrect = (part.options[btnIdx] === `$ ${part.mcAnswerStr} $`);
+            processSetAnswer(pi, isCorrect);
+        }
+
+        function submitSetPartFill(pi) {
+            const set = currentSets[currentSetIndex];
+            const part = set[pi];
+            if (part.done) return;
+            activePart = part;
+
+            const rawInput = document.getElementById(`l3-input-${pi}`).value;
+            if (!rawInput.trim()) {
+                showToast("Please enter an answer.", "info");
+                return;
+            }
+            const cleanInput = rawInput.toLowerCase().replace(/\*/g, '');
+            const isCorrect = checkFillAnswer(cleanInput, part);
+            processSetAnswer(pi, isCorrect);
+        }
+
+        function rebuildL3Block(pi) {
+            const part = currentSets[currentSetIndex][pi];
+            const block = document.getElementById(`l3-block-${pi}`);
+            if (!block) return;
+            let inner = '';
+            inner += `<div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-bold text-emerald-400">Part ${part.partLabel}</span>
+                <span id="l3-status-${pi}" class="${part.done ? 'text-green-400' : 'text-slate-400'} text-sm font-semibold">${part.done ? '✓ Correct' : ''}</span>
+            </div>`;
+            inner += `<div id="l3-q-${pi}" class="text-lg sm:text-xl text-white mb-3 text-left overflow-x-auto min-h-[40px] leading-relaxed">${part.qHtml}</div>`;
+            if (part.done) {
+                inner += `<div class="text-center text-green-400 text-sm py-2 font-semibold">Answer: $ ${part.mcAnswerStr} $</div>`;
+                if (part.explanation) {
+                    inner += `<div class="mt-2 bg-slate-900/60 border border-slate-700 rounded-lg p-3 text-sm text-slate-300 text-left leading-snug">${part.explanation}</div>`;
+                }
+            } else if (part.mode === 'mc') {
+                inner += `<div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="l3-mc-${pi}">`;
+                part.options.forEach((o, bi) => {
+                    inner += `<button onclick="submitSetPartMC(${pi}, ${bi})" class="option-btn bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl p-3 text-lg transition-all shadow-md active:scale-95 min-h-[56px] flex items-center justify-center">${o}</button>`;
+                });
+                inner += `</div>`;
+            } else {
+                inner += `
+                <div class="flex gap-2 w-full">
+                    <input type="text" id="l3-input-${pi}" placeholder="${part.placeholder || 'Type your answer'}" oninput="updateL3Preview(${pi})" onkeypress="if(event.key==='Enter')submitSetPartFill(${pi})" class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-lg font-mono text-white outline-none focus:border-amber-500 transition shadow-inner">
+                    <button onclick="submitSetPartFill(${pi})" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 rounded-lg text-base transition shadow-md active:scale-95">Submit</button>
+                </div>
+                <div id="l3-helpers-${pi}" class="flex flex-wrap gap-2 justify-center w-full mt-2">`;
+                ['π', '√', '^', '²', '³', '(', ')', '+', '-', '.'].forEach(op => {
+                    inner += `<button onclick="insertL3Char(${pi},'${op}')" class="bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded text-white font-mono text-sm transition">${op}</button>`;
+                });
+                inner += `</div>
+                <div class="w-full p-3 bg-slate-900/60 border border-slate-700 rounded-lg text-center mt-2">
+                    <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1 block">Live Answer Preview</span>
+                    <div id="l3-preview-${pi}" class="text-lg text-slate-300 min-h-[28px] flex items-center justify-center">Empty</div>
+                </div>`;
+            }
+            block.innerHTML = inner;
+            block.classList.remove('border-slate-700');
+            block.classList.add(part.done ? 'border-green-500/70' : 'border-slate-700');
+            if (window.MathJax) MathJax.typesetPromise([block]);
+        }
+
+        function processSetAnswer(pi, isCorrect) {
+            levelStats[`level${currentLevel}`].total++;
+
+            if (isCorrect) {
+                levelStats[`level${currentLevel}`].correct++;
+                showToast(`Part ${currentSets[currentSetIndex][pi].partLabel} correct! Awesome job.`, "success");
+
+                const set = currentSets[currentSetIndex];
+                set[pi].done = true;
+                rebuildL3Block(pi);
+
+                if (set.every(p => p.done)) {
+                    setTimeout(() => {
+                        currentSetIndex++;
+                        if (currentSetIndex >= currentSets.length) {
+                            winGame();
+                        } else {
+                            renderSet();
+                        }
+                    }, 700);
+                }
+            } else {
+                showWrongReflectionModal();
+            }
+        }
+
+        function insertAtCursor(myValue) {
+            const myField = document.getElementById('conventional-input');
+            if (document.selection) {
+                myField.focus();
+                sel = document.selection.createRange();
+                sel.text = myValue;
+            } else if (myField.selectionStart || myField.selectionStart == '0') {
+                var startPos = myField.selectionStart;
+                var endPos = myField.selectionEnd;
+                myField.value = myField.value.substring(0, startPos) + myValue + myField.value.substring(endPos, myField.value.length);
+                myField.selectionStart = startPos + myValue.length;
+                myField.selectionEnd = startPos + myValue.length;
+            } else {
+                myField.value += myValue;
+            }
+            myField.focus();
+            updateLivePreview();
+        }
+
+        function handleEnter(e) {
+            if(e.key === 'Enter') submitFillAnswer();
+        }
+
+        function submitMCAnswer(btnIndex) {
+            const q = currentQuestions[currentQuestionIndex];
+            const selectedText = q.options[btnIndex];
+            const isCorrect = (selectedText === `$ ${q.mcAnswerStr} $`);
+            processAnswer(isCorrect);
+        }
+
+        function submitFillAnswer() {
+            const q = currentQuestions[currentQuestionIndex];
+            const rawInput = document.getElementById('conventional-input').value;
+
+            if(!rawInput.trim()) {
+                showToast("Please enter an answer.", "info");
+                return;
+            }
+
+            const cleanInput = rawInput.toLowerCase().replace(/\*/g, '');
+            const isCorrect = checkFillAnswer(cleanInput, q);
+            processAnswer(isCorrect);
+        }
+
+        function processAnswer(isCorrect) {
+            // Track total attempts for the current level
+            levelStats[`level${currentLevel}`].total++;
+
+            if (isCorrect) {
+                // Track correct attempts
+                levelStats[`level${currentLevel}`].correct++;
+                showToast("Correct! Awesome job.", "success");
+                currentQuestionIndex++;
+
+                if (currentQuestionIndex >= currentQuestions.length) {
+                    winGame();
+                } else {
+                    renderQuestion();
+                }
+            } else {
+                // Instantly pop up the wrong reflection modal before deducting life
+                showWrongReflectionModal();
+            }
+        }
+
+        function showWrongReflectionModal() {
+            const modal = document.getElementById('wrong-reflection-modal');
+            modal.classList.remove('hidden');
+            if(window.MathJax) MathJax.typesetPromise([modal]);
+        }
+
+        function submitWrongReflection(selectedLaw) {
+            const q = (currentLevel === 3) ? activePart : currentQuestions[currentQuestionIndex];
+            const actualLaw = q.firstStepLaw;
+
+            let isLawCorrect = (selectedLaw === actualLaw);
+            if (actualLaw === 'use_a' && selectedLaw !== '') isLawCorrect = true;
+
+            document.getElementById('wrong-reflection-modal').classList.add('hidden');
+
+            if (isLawCorrect) {
+                showToast("Good reflection! You identified the correct technique to start with.", "success");
+            } else {
+                showToast("Not quite! Remember to check the Formula sheet or ask AI Tutor.", "error");
+            }
+
+            // Deduct life and shake the game screen to indicate a mistake
+            lives--;
+            updateLivesUI();
+            updateLiveScore();
+            showWrongFeedback();
+
+            const gameArea = document.getElementById('main-game-area');
+            gameArea.classList.add('shake');
+            setTimeout(() => gameArea.classList.remove('shake'), 400);
+
+            if (lives <= 0) {
+                setTimeout(() => {
+                    showToast("Mission Failed. Out of lives!", "error");
+                    quitGame();
+                }, 500);
+            }
+        }
+
+        function winGame() {
+            badgeRecords[`level${currentLevel}`] = true;
+            const earned = currentAttemptMarks();
+            scoreTotals[`level${currentLevel}`] += earned;
+            saveScores();
+            showToast(`Level ${currentLevel} Complete! +${earned} marks earned! 🏆`, "success");
+            quitGame();
+        }
+
+        function quitGame() {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('dashboard-screen').classList.remove('hidden');
+            updatePassportUI();
+        }
+
+        // Pretty-print the live preview: ^2 → ², ^3 → ³, sqrt → √ (plain text, never MathJax)
+        function prettyPreview(s) {
+            const sup = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '-': '⁻' };
+            return String(s)
+                .replace(/\^(-?\d+)/g, (mm, d) => d.split('').map(c => sup[c] || c).join(''))
+                .replace(/sqrt/gi, '√')
+                .replace(/\bpi\b/gi, 'π');
+        }
+
+        // Live Answer Preview for Fill-in Mode (plain text with superscript pretty-print)
+        function updateLivePreview() {
+            const input = document.getElementById('conventional-input').value;
+            const previewBox = document.getElementById('math-preview');
+            if (!previewBox) return;
+            previewBox.textContent = input.trim() ? prettyPreview(input) : 'Empty';
+        }
+
+        // --- HELPER UI FUNCTIONS ---
+
+        function showToast(message, type) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('fade-out');
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        function showWrongFeedback() {
+            const el = document.getElementById('feedback-toast');
+            el.classList.remove('hidden');
+            setTimeout(() => {
+                el.classList.add('hidden');
+            }, 3000);
+        }
+
+        function toggleCheatSheet() {
+            const modal = document.getElementById('cheat-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        function closeAITutor() {
+            document.getElementById('ai-tutor-modal').classList.add('hidden');
+        }
+
+        function askAITutor() {
+            let q;
+            if (currentLevel === 3) {
+                q = activePart;
+                if (!q) {
+                    q = currentSets[currentSetIndex].find(p => !p.done) || currentSets[currentSetIndex][0];
+                }
+            } else {
+                q = currentQuestions[currentQuestionIndex];
+            }
+            let hint = "";
+            switch (q.firstStepLaw) {
+                case 'write_equation':
+                    hint = "First write the variation equation: direct → $y = kx$, inverse → $y = \\dfrac{k}{x}$, joint → $z = kx^{a}y^{b}$ (or $z = \\dfrac{kx^{a}}{y^{b}}$). For 'which must be constant', rearrange to isolate k — that expression is the answer. For %-change questions, apply each change factor: new factor $= (1 \\pm p\\%)^{a}(1 \\mp q\\%)^{b}$.";
+                    break;
+                case 'find_k':
+                    hint = "Substitute the given pair of values into the equation to find the constant k first, then substitute the new values into $z = kx^{a}y^{b}$ to find the unknown.";
+                    break;
+                case 'partial_variation':
+                    hint = "Partial variation means the quantity is a SUM of parts, e.g. $y = c + ax^{n}$ (one constant part + one varying part) or $y = ax^{p} + bx^{q}$. Substitute the two given pairs to get two simultaneous equations, then solve for the unknowns.";
+                    break;
+                case 'use_a':
+                    hint = "This part builds on part (a): reuse the equation or the value you found there — substitute the new condition into it instead of starting from scratch.";
+                    break;
+                default:
+                    hint = "Write the variation equation first, find k by substitution, then answer the question.";
+            }
+
+            document.getElementById('ai-content-area').innerHTML = `
+                <div class="bg-slate-800/80 p-5 rounded-lg border border-purple-500/30 mb-4 shadow-inner">
+                    <p class="text-purple-300 font-semibold mb-2 text-lg">🤖 AI Hint specifically for this question:</p>
+                    <p class="text-white text-base">${hint}</p>
+                </div>
+                <div class="bg-slate-800/80 p-5 rounded-lg border border-slate-600 shadow-inner">
+                    <p class="text-amber-400 font-semibold mb-2 text-lg">💡 General Checklist:</p>
+                    <ul class="list-disc list-inside space-y-2 text-slate-300">
+                        <li>Direct → multiply ($y = kx$), inverse → divide ($y = k/x$), joint → combine both.</li>
+                        <li>Always find the constant k FIRST by substituting the given pair(s).</li>
+                        <li>Partial variation = a sum of parts: use the two given pairs to form two equations.</li>
+                        <li>% change: replace each variable by its factor $(1 \\pm p\\%)$ with the correct power.</li>
+                    </ul>
+                </div>
+            `;
+            document.getElementById('ai-tutor-modal').classList.remove('hidden');
+            if(window.MathJax) MathJax.typesetPromise();
+        }
+
+        // --- REFLECTION & SUBMISSION LOGIC ---
+
+        function submitToTeacher() {
+            if (!studentProfile) return;
+
+            const btn = document.getElementById('btn-submit-teacher');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Sending... ⏳';
+            btn.disabled = true;
+
+            const getPercent = (lvl) => {
+                const s = levelStats[lvl];
+                return s.total > 0 ? Math.round((s.correct / s.total) * 100) + "%" : "N/A";
+            };
+
+            const payload = {
+                timestamp: new Date().toISOString(),
+                topic: 'Variations',
+                class: studentProfile.class,
+                no: studentProfile.no,
+                name: studentProfile.name,
+                level1: badgeRecords.level1,
+                level1Percent: getPercent('level1'),
+                level1Marks: scoreTotals.level1,
+                level2: badgeRecords.level2,
+                level2Percent: getPercent('level2'),
+                level2Marks: scoreTotals.level2,
+                level3: badgeRecords.level3,
+                level3Percent: getPercent('level3'),
+                level3Marks: scoreTotals.level3,
+                totalMarks: scoreTotals.level1 + scoreTotals.level2 + scoreTotals.level3
+            };
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'text/plain;charset=UTF-8',
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(resp => resp.json())
+            .then(data => {
+                if (data && data.status === 'success') {
+                    showToast("Data submitted to teacher successfully!", "success");
+                } else {
+                    showToast("Server replied but data not saved: " + (data && data.message ? data.message : 'unknown error'), "error");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast("Submission failed. Check your internet / Apps Script deployment.", "error");
+            })
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>
