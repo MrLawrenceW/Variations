@@ -14,6 +14,9 @@
     <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
+        /* Paper typography: question text in Times New Roman, unknowns italic */
+        #question-display, .qtext { font-family: 'Times New Roman', Times, serif; }
+        .mathvar { font-style: italic; }
         .glass-panel {
             background: rgba(30, 41, 59, 0.8);
             backdrop-filter: blur(12px);
@@ -582,24 +585,24 @@
                     mcTex = this.tx(answerStr);
                     law = 'write_equation'; src = '16 P2 Q12 / 19 P2 Q13 / 24 P2 Q13';
                 } else if (t === 6) {
-                    // V7: I / II / III true statements (22 P2 Q13)
-                    const s = [1, 2][this.rand(0, 1)];
-                    const W = s === 1 ? 'w' : 'the square of w';
-                    const stT1 = s === 1
-                        ? 'u² varies directly as v and inversely as the square of w.'
-                        : 'u² varies directly as v and inversely as the fourth power of w.';
-                    const stF = s === 1
-                        ? 'v varies directly as u and inversely as w.'
-                        : 'v varies directly as u and inversely as the square of w.';
-                    const stT2 = s === 1
-                        ? 'w varies directly as the square root of v and inversely as u.'
-                        : 'w varies directly as the fourth root of v and inversely as the square root of u.';
+                    // V7: I / II / III true statements (22 P2 Q13) — paper 13 layout:
+                    // stem on one line, statements on separate hanging-indent lines.
+                    // Plain text only — styleVars() adds the italic Times variables at render time.
+                    const stT1 = `u² varies directly as v and inversely as the square of w.`;
+                    const stF = `v varies directly as u and inversely as w.`;
+                    const stT2 = `w varies directly as the square root of v and inversely as u.`;
                     const order = this.shuffle([0, 1, 2]);
                     const sts = [stT1, stF, stT2];
                     const stI = sts[order[0]], stII = sts[order[1]], stIII = sts[order[2]];
                     const falsePos = order.indexOf(1);
                     const ansLabel = falsePos === 0 ? 'II and III only' : (falsePos === 1 ? 'I and III only' : 'I and II only');
-                    text = `If u varies directly as the square root of v and inversely as ${W}, which of the following are true? I. ${stI} II. ${stII} III. ${stIII}`;
+                    const indent = 'style="padding-left:1.75rem;text-indent:-1.75rem"';
+                    text = `If u varies directly as the square root of v and inversely as w, which of the following are true?`
+                        + `<div class="mt-2 flex flex-col gap-1.5">`
+                        + `<div ${indent}>I.&nbsp;&nbsp;${stI}</div>`
+                        + `<div ${indent}>II.&nbsp;&nbsp;${stII}</div>`
+                        + `<div ${indent}>III.&nbsp;&nbsp;${stIII}</div>`
+                        + `</div>`;
                     answerStr = ansLabel; mcTex = this.tx(ansLabel);
                     optsTex = ['I and II only', 'I and III only', 'II and III only', 'I, II and III'].map(l => this.tx(l));
                     law = 'write_equation'; src = '22 P2 Q13';
@@ -1028,6 +1031,17 @@
             return false;
         }
 
+        // --- PAPER TYPOGRAPHY: question text in Times New Roman, unknowns italic ---
+        // Generators keep PLAIN text (QA modules parse it); styling happens here at render time.
+        const MATHVAR_SET = new Set('xyzuvwkhnfgPSTWCGAUVBXℓ'.split(''));
+        function styleVars(html) {
+            return html.split(/(<[^>]+>|\$[^$]*\$)/).map(seg => {
+                if (seg.charAt(0) === '<' || seg.charAt(0) === '$') return seg; // existing tags / MathJax stay untouched
+                return seg.replace(/(^|[^A-Za-zℓ])([A-Za-zℓ])(?=[^A-Za-zℓ]|$)/g,
+                    (m, pre, ch) => pre + (MATHVAR_SET.has(ch) ? '<i class="mathvar">' + ch + '</i>' : ch));
+            }).join('');
+        }
+
         // --- CORE GAME LOGIC ---
 
         function login() {
@@ -1239,7 +1253,7 @@
             document.getElementById('question-display').classList.remove('hidden');
 
             const displayEl = document.getElementById('question-display');
-            displayEl.innerHTML = q.text;
+            displayEl.innerHTML = styleVars(q.text);
 
             document.getElementById('question-instruction').textContent = q.instruction;
             document.getElementById('paper-hint').textContent =
@@ -1371,7 +1385,7 @@
                 <span class="text-sm font-bold text-emerald-400">Part ${part.partLabel}</span>
                 <span id="l3-status-${pi}" class="${part.done ? 'text-green-400' : 'text-slate-400'} text-sm font-semibold">${part.done ? '✓ Correct' : ''}</span>
             </div>`;
-            inner += `<div id="l3-q-${pi}" class="text-lg sm:text-xl text-white mb-3 text-left overflow-x-auto min-h-[40px] leading-relaxed">${part.qHtml}</div>`;
+            inner += `<div id="l3-q-${pi}" class="qtext text-lg sm:text-xl text-white mb-3 text-left overflow-x-auto min-h-[40px] leading-relaxed">${styleVars(part.qHtml)}</div>`;
             if (part.done) {
                 inner += `<div class="text-center text-green-400 text-sm py-2 font-semibold">Answer: $ ${part.mcAnswerStr} $</div>`;
                 if (part.explanation) {
