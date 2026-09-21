@@ -363,6 +363,23 @@
         const GOOGLE_SCRIPT_URL =
             'https://script.google.com/macros/s/AKfycbxJo4Y6bWmopW9cw1Mbaww8uJOoAzs_VHbr0y7wlSo4mv7kzbZm3c1urcndhDt31DRp8Q/exec';
 
+        const APP_VERSION = '1';
+        (function watchAppVersion() {
+            const file = (location.pathname.split('/').pop() || '').split('?')[0];
+            const check = () => {
+                fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data[file] && data[file] !== APP_VERSION) location.reload();
+                    })
+                    .catch(() => {});
+            };
+            setInterval(check, 60000);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') check();
+            });
+        })();
+
         let studentProfile = null;
         let badgeRecords = { level1: false, level2: false, level3: false };
         let currentLevel = 1;
